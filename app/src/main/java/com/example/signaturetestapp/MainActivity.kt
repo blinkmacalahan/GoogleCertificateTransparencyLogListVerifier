@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var textView: TextView
     private lateinit var uppercaseAlgorithm: Button
     private lateinit var lowercaseAlgorithm: Button
-    private var isThreadRunning = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,12 +71,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
         uppercaseAlgorithm.setOnClickListener(this)
         lowercaseAlgorithm.setOnClickListener(this)
-
-        Thread {
-            isGoogleLogListVerified(applicationContext)
-        }.also {
-            it.start()
-        }
     }
 
     override fun onClick(v: View?) {
@@ -88,40 +81,24 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun toggleButtons(enabled: Boolean) {
-        uppercaseAlgorithm.isEnabled = enabled
-        lowercaseAlgorithm.isEnabled = enabled
-    }
-
     private fun onVerificationComplete(displayText: String) {
-        isThreadRunning = false
-        toggleButtons(true)
         textView.text = displayText
     }
 
     private fun verifyLogList(algorithm: String) {
-        if (isThreadRunning) {
-            return
-        }
-        Thread {
-            try {
-                val result = isGoogleLogListVerified(applicationContext)
-                textView.post {
-                    onVerificationComplete(if (result) "$algorithm: Log List is Verified" else "$algorithm: Log list FAILED verification")
-                }
-            } catch (e: Exception) {
-                textView.post {
-                    onVerificationComplete(
-                        algorithm + ": Error while verifying log list.\n" + e.message
-                    )
-                }
-                e.printStackTrace()
+        try {
+            val result = isGoogleLogListVerified(applicationContext)
+            textView.post {
+                onVerificationComplete(if (result) "$algorithm: Log List is Verified" else "$algorithm: Log list FAILED verification")
             }
-        }.also {
-            it.start()
+        } catch (e: Exception) {
+            textView.post {
+                onVerificationComplete(
+                    algorithm + ": Error while verifying log list.\n" + e.message
+                )
+            }
+            e.printStackTrace()
         }
-        toggleButtons(false)
-        isThreadRunning = true
     }
 
     // JAVA 8 Version that does the same thing

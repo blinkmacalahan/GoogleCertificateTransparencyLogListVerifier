@@ -37,8 +37,6 @@ public class MainJavaActivity extends AppCompatActivity implements View.OnClickL
 
     private Button mUppercaseAlgorithm, mLowercaseAlgorithm;
 
-    private boolean mIsThreadRunning = false;
-
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,46 +58,29 @@ public class MainJavaActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    private void toggleButtons(boolean enabled) {
-        mUppercaseAlgorithm.setEnabled(enabled);
-        mLowercaseAlgorithm.setEnabled(enabled);
-    }
-
     private void verifyLogList(final String algorithm) {
-        if (mIsThreadRunning) {
-            return;
-        }
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    final boolean result = isGoogleLogListVerified(MainJavaActivity.this, algorithm);
-                    mTextView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            onVerificationComplete(result ? algorithm + ": Log List is Verified"
-                                    : algorithm + ": Log list FAILED verification");
-                        }
-                    });
-                } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | SignatureException e) {
-                    mTextView.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            onVerificationComplete(
-                                    algorithm + ": Error while verifying log list.\n" + e.getMessage());
-                        }
-                    });
-                    e.printStackTrace();
+        try {
+            final boolean result = isGoogleLogListVerified(MainJavaActivity.this, algorithm);
+            mTextView.post(new Runnable() {
+                @Override
+                public void run() {
+                    onVerificationComplete(result ? algorithm + ": Log List is Verified"
+                            : algorithm + ": Log list FAILED verification");
                 }
-            }
-        }.start();
-        toggleButtons(false);
-        mIsThreadRunning = true;
+            });
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | SignatureException e) {
+            mTextView.post(new Runnable() {
+                @Override
+                public void run() {
+                    onVerificationComplete(
+                            algorithm + ": Error while verifying log list.\n" + e.getMessage());
+                }
+            });
+            e.printStackTrace();
+        }
     }
 
     private void onVerificationComplete(final String displayText) {
-        mIsThreadRunning = false;
-        toggleButtons(true);
         mTextView.setText(displayText);
     }
 
