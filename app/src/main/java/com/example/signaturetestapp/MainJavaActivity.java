@@ -85,19 +85,23 @@ public class MainJavaActivity extends AppCompatActivity implements View.OnClickL
     }
 
     public static boolean isGoogleLogListVerified(Context context, final String algorithm)
-            throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException,
+            throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException,
             SignatureException {
         byte[] sigBytes = toByteArray(context.getAssets().open("log_list.sig"));
-
         byte[] pubBytes = loadPEM(context.getAssets().open("log_list_pubkey.pem"));
         byte[] json = toByteArray(context.getAssets().open("log_list.json"));
+        return isGoogleLogListVerified(algorithm, sigBytes, pubBytes, json);
+    }
+
+    public static boolean isGoogleLogListVerified(final String algorithm, byte[] signatureBytes, byte[] publicKeyBytes, byte[] logListBytes)
+            throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException,
+            SignatureException {
+
         KeyFactory kf = KeyFactory.getInstance("RSA");
         Signature sig = Signature.getInstance(algorithm);
-        Log.d(TAG, "" + kf.generatePublic(new X509EncodedKeySpec(pubBytes)));
-        sig.initVerify(kf.generatePublic(new X509EncodedKeySpec(pubBytes)));
-        sig.update(json);
-        boolean verified = sig.verify(sigBytes);
-        Log.d(TAG, "" + verified);
+        sig.initVerify(kf.generatePublic(new X509EncodedKeySpec(publicKeyBytes)));
+        sig.update(logListBytes);
+        boolean verified = sig.verify(signatureBytes);
         return verified;
     }
 
@@ -113,7 +117,7 @@ public class MainJavaActivity extends AppCompatActivity implements View.OnClickL
         return os.toByteArray();
     }
 
-    private static byte[] loadPEM(InputStream inputStream) throws IOException {
+    public static byte[] loadPEM(InputStream inputStream) throws IOException {
         byte[] pubBytes = toByteArray(inputStream);
         String pem = new String(pubBytes);
         Pattern parse = Pattern.compile("(?m)(?s)^---*BEGIN.*---*$(.*)^---*END.*---*$.*");
